@@ -1,1 +1,0 @@
-### NMQ model practice using RabbitMQ

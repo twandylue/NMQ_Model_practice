@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\91APP\\NMQ_Model_practice\\NMQ_Model_practice.csproj": {}
+    "D:\\91APP\\NMQ_Model_practice\\NewTask\\NewTask.csproj": {}
   },
   "projects": {
-    "D:\\91APP\\NMQ_Model_practice\\NMQ_Model_practice.csproj": {
+    "D:\\91APP\\NMQ_Model_practice\\NewTask\\NewTask.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\91APP\\NMQ_Model_practice\\NMQ_Model_practice.csproj",
-        "projectName": "NMQ_Model_practice",
-        "projectPath": "D:\\91APP\\NMQ_Model_practice\\NMQ_Model_practice.csproj",
+        "projectUniqueName": "D:\\91APP\\NMQ_Model_practice\\NewTask\\NewTask.csproj",
+        "projectName": "NewTask",
+        "projectPath": "D:\\91APP\\NMQ_Model_practice\\NewTask\\NewTask.csproj",
         "packagesPath": "C:\\Users\\Andy Lu2\\.nuget\\packages\\",
-        "outputPath": "D:\\91APP\\NMQ_Model_practice\\obj\\",
+        "outputPath": "D:\\91APP\\NMQ_Model_practice\\NewTask\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\Andy Lu2\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -37,6 +37,12 @@
       "frameworks": {
         "net5.0": {
           "targetAlias": "net5.0",
+          "dependencies": {
+            "RabbitMQ.Client": {
+              "target": "Package",
+              "version": "[6.2.2, )"
+            }
+          },
           "imports": [
             "net461",
             "net462",

@@ -12,11 +12,17 @@ namespace Worker
 {
     class Program
     {
-        private BlockingCollection<MyTask> queue = new BlockingCollection<MyTask>();
         static void Main(string[] args)
         {
-            // one worker
-            // Console.WriteLine("Hello World!");
+            new MyRabbitMQ().getMessage();
+            Console.WriteLine("DONE!");
+        }
+    }
+
+    class MyRabbitMQ
+    {
+        public void getMessage()
+        {
             var factory = new ConnectionFactory()
             {
                 UserName = "root",
@@ -44,65 +50,55 @@ namespace Worker
                 {
                     var body = ea.Body.ToArray();
                     var message = Encoding.UTF8.GetString(body);
-                    // Console.WriteLine(" [x] Received {0}", message);
-                    MyJob job = JsonSerializer.Deserialize<MyJob>(message);
-                    this.queue.Add(new MyTask(job.job_type));
-                    // Person ms = JsonSerializer.Deserialize<Person>(message);
-                    // Console.WriteLine($"Name: {ms.name}");
-                    // Console.WriteLine($"Age: {ms.age}");
-                    Console.WriteLine(" [x] Done");
+                    MyTask task = JsonSerializer.Deserialize<MyTask>(message);
+                    this.queue.Add(task); // put task in queue
+                    Console.WriteLine(" [x] Done: putting job in queue");
                     channel.BasicAck(
                         deliveryTag: ea.DeliveryTag,
                         multiple: false
                     );
-                    // Thread.Sleep(500);
                 };
                 channel.BasicConsume(
                     queue: "task_queue",
                     autoAck: false,
                     consumer: consumer
                 );
+                StartRun(); // Start threads 
                 Console.WriteLine(" Press [enter] to exit");
                 Console.ReadLine();
             }
         }
+        private void StartRun()
+        {
+            // open 10 thread
+            for (int i = 0; i < 5; i++)
+            {
+                Task.Run(() => { this.DoAllType(); });
+            }
+        }
 
-        // private static void Unit(int type)
-        // {
-        //     Console.WriteLine($"Execute type {type} task.");
-        //     if (type == 1) Thread.Sleep(1000);
-        //     if (type == 2) Thread.Sleep(5000);
-        // }
-    }
+        private BlockingCollection<MyTask> queue = new BlockingCollection<MyTask>();
 
-    // class Person
-    // {
-    //     public string name { get; set; }
-    //     public int age { get; set; }
-    // }
-
-    class MyJob {
-        public string job_name {get; set;}
-        public int job_type {get; set;}
+        private void DoAllType()
+        {
+            foreach (var task in this.queue.GetConsumingEnumerable())
+            {
+                if (task.type != 1 && task.type != 2)
+                {
+                    Console.WriteLine("Wrong Task type.");
+                    return;
+                }
+                Console.WriteLine($"Execute type {task.type} task.");
+                if (task.type == 1) Thread.Sleep(2000);
+                if (task.type == 2) Thread.Sleep(5000);
+            }
+            // this.queue.CompleteAdding();
+        }
     }
 
     class MyTask
     {
-        private int type;
-        public MyTask(int type)
-        {
-            this.type = type;
-        }
-        public void Run()
-        {
-            if (this.type != 1 || this.type != 2)
-            {
-                Console.WriteLine("Wrong Task type.");
-                return;
-            }
-            Console.WriteLine($"Execute type {this.type} task.");
-            if (this.type == 1) Thread.Sleep(1000);
-            if (this.type == 2) Thread.Sleep(5000);
-        }
+        public string name { get; set; }
+        public int type { get; set; }
     }
 }
