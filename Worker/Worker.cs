@@ -51,8 +51,9 @@ namespace Worker
                     var body = ea.Body.ToArray();
                     var message = Encoding.UTF8.GetString(body);
                     MyTask task = JsonSerializer.Deserialize<MyTask>(message);
-                    this.queue.Add(task); // put task in queue
-                    Console.WriteLine(" [x] Done: putting job in queue");
+                    this.queues[task.type].Add(task); // put task in queue
+                    Console.WriteLine($" [x] Received: task: {task.type}");
+                    Console.WriteLine($" [x] Done: putting task {task.type} in queue");
                     channel.BasicAck(
                         deliveryTag: ea.DeliveryTag,
                         multiple: false
@@ -70,18 +71,29 @@ namespace Worker
         }
         private void StartRun()
         {
-            // open 10 thread
-            for (int i = 0; i < 5; i++)
+            List<Task> tasks = new List<Task>();
+            int[] counts = { 0, 5, 3 };
+            for (int type = 1; type <= 2; type++)
             {
-                Task.Run(() => { this.DoAllType(); });
+                for (int i = 0; i < counts[type]; i++)
+                {
+                    int temp = type;
+                    Task t = Task.Run(() => { this.DoAllType(temp); });
+                    tasks.Add(t);
+                }
             }
+            foreach (var t in tasks) t.Wait();
         }
 
-        private BlockingCollection<MyTask> queue = new BlockingCollection<MyTask>();
+        private BlockingCollection<MyTask>[] queues = new BlockingCollection<MyTask>[1 + 2]{
+            null,
+            new BlockingCollection<MyTask>(),
+            new BlockingCollection<MyTask>()
+        };
 
-        private void DoAllType()
+        private void DoAllType(int type)
         {
-            foreach (var task in this.queue.GetConsumingEnumerable())
+            foreach (var task in this.queues[type].GetConsumingEnumerable())
             {
                 if (task.type != 1 && task.type != 2)
                 {
@@ -89,8 +101,8 @@ namespace Worker
                     return;
                 }
                 Console.WriteLine($"Execute type {task.type} task.");
-                if (task.type == 1) Thread.Sleep(2000);
-                if (task.type == 2) Thread.Sleep(5000);
+                if (task.type == 1) Thread.Sleep(500);
+                if (task.type == 2) Thread.Sleep(1000);
             }
             // this.queue.CompleteAdding();
         }

@@ -47,9 +47,6 @@ namespace NewTask
         private static string GetMessage(string[] args, int index)
         {
             MyTask task = new MyTask();
-            Console.WriteLine(index % 2);
-            Console.WriteLine(index % 2 == 0);
-
             if (index % 2 == 0)
             {
                 task.name = "Logging";
