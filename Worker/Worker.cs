@@ -72,7 +72,7 @@ namespace Worker
         private void StartRun()
         {
             List<Task> tasks = new List<Task>();
-            int[] counts = { 0, 5, 3 };
+            int[] counts = { 0, 5, 3 }; // thread pool
             for (int type = 1; type <= 2; type++)
             {
                 for (int i = 0; i < counts[type]; i++)
@@ -101,8 +101,8 @@ namespace Worker
                     return;
                 }
                 Console.WriteLine($"Execute type {task.type} task.");
-                if (task.type == 1) Thread.Sleep(500);
-                if (task.type == 2) Thread.Sleep(1000);
+                if (task.type == 1) Thread.Sleep(500); // do something... method 1
+                if (task.type == 2) Thread.Sleep(1000); // do something... method 2
             }
             // this.queue.CompleteAdding();
         }
@@ -112,5 +112,23 @@ namespace Worker
     {
         public string name { get; set; }
         public int type { get; set; }
+    }
+
+    class DoTask1 : MyTask
+    {
+        public void finishTask()
+        {
+            // do something...
+            Thread.Sleep(1000);
+        }
+    }
+
+    class DoTask2 : MyTask
+    {
+        public void finishTask()
+        {
+            // do something...
+            Thread.Sleep(3000);
+        }
     }
 }
