@@ -54,7 +54,6 @@ namespace Worker
 
                     this.queues[task.type].Add(task); // put task in queue
 
-                    // Console.WriteLine($" [x] Received: task: {task.type}");
                     Console.WriteLine($" [x] Done: putting task {task.type} in queue");
                     channel.BasicAck(
                         deliveryTag: ea.DeliveryTag,
@@ -66,7 +65,7 @@ namespace Worker
                     autoAck: false,
                     consumer: consumer
                 );
-                StartRun(); // Start threads 
+                this.StartRun(); // Start threads 
                 Console.WriteLine(" Press [enter] to exit");
                 Console.ReadLine();
             }
@@ -77,12 +76,14 @@ namespace Worker
             int[] counts = { 0, 2, 3 }; // thread pool
             for (int type = 1; type <= 2; type++)
             {
-                for (int i = 0; i < counts[type]; i++)
+                Parallel.For(1, counts.Length, (type) =>
                 {
-                    int temp = type;
-                    Task t = Task.Run(() => { this.DoAllType(temp); });
-                    tasks.Add(t);
-                }
+                    for (int i = 0; i < counts[type]; i++)
+                    {
+                        Task t = Task.Run(() => { this.DoAllType(type); });
+                        tasks.Add(t);
+                    }
+                });
             }
             foreach (var t in tasks) t.Wait();
         }
@@ -93,11 +94,6 @@ namespace Worker
             new BlockingCollection<MyTask>()
         };
 
-        // using dictionary
-        // private Dictionary<int, Func<IDoTask>> TaskType = new Dictionary<int, Func<IDoTask>>(){
-        //     {1, () => new MyTask1()},
-        //     {2, () => new MyTask2()}
-        // };
         private Func<IDoTask>[] TaskType = new Func<IDoTask>[1 + 2] {
             null,
             () => new MyTask1(),
@@ -108,7 +104,7 @@ namespace Worker
         {
             foreach (var task in this.queues[type].GetConsumingEnumerable())
             {
-                TaskType[type]().finishTask(task.name, task.id);
+                this.TaskType[type]().finishTask(task.name, task.id);
             }
             // this.queue.CompleteAdding();
         }
