@@ -49,11 +49,13 @@ namespace NewTask
             MyTask task = new MyTask();
             if (index % 2 == 0)
             {
+                task.id = index;
                 task.name = "Logging";
                 task.type = 1;
             }
             else
             {
+                task.id = index;
                 task.name = "Eating";
                 task.type = 2;
             }
@@ -64,6 +66,7 @@ namespace NewTask
 
     class MyTask
     {
+        public int id {get; set;}
         public string name { get; set; }
         public int type { get; set; }
     }

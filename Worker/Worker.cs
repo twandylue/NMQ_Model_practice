@@ -51,8 +51,10 @@ namespace Worker
                     var body = ea.Body.ToArray();
                     var message = Encoding.UTF8.GetString(body);
                     MyTask task = JsonSerializer.Deserialize<MyTask>(message);
+
                     this.queues[task.type].Add(task); // put task in queue
-                    Console.WriteLine($" [x] Received: task: {task.type}");
+
+                    // Console.WriteLine($" [x] Received: task: {task.type}");
                     Console.WriteLine($" [x] Done: putting task {task.type} in queue");
                     channel.BasicAck(
                         deliveryTag: ea.DeliveryTag,
@@ -72,7 +74,7 @@ namespace Worker
         private void StartRun()
         {
             List<Task> tasks = new List<Task>();
-            int[] counts = { 0, 5, 3 }; // thread pool
+            int[] counts = { 0, 2, 3 }; // thread pool
             for (int type = 1; type <= 2; type++)
             {
                 for (int i = 0; i < counts[type]; i++)
@@ -91,18 +93,22 @@ namespace Worker
             new BlockingCollection<MyTask>()
         };
 
+        // using dictionary
+        // private Dictionary<int, Func<IDoTask>> TaskType = new Dictionary<int, Func<IDoTask>>(){
+        //     {1, () => new MyTask1()},
+        //     {2, () => new MyTask2()}
+        // };
+        private Func<IDoTask>[] TaskType = new Func<IDoTask>[1 + 2] {
+            null,
+            () => new MyTask1(),
+            () => new MyTask2()
+        };
+
         private void DoAllType(int type)
         {
             foreach (var task in this.queues[type].GetConsumingEnumerable())
             {
-                if (task.type != 1 && task.type != 2)
-                {
-                    Console.WriteLine("Wrong Task type.");
-                    return;
-                }
-                Console.WriteLine($"Execute type {task.type} task.");
-                if (task.type == 1) Thread.Sleep(500); // do something... method 1
-                if (task.type == 2) Thread.Sleep(1000); // do something... method 2
+                TaskType[type]().finishTask(task.name, task.id);
             }
             // this.queue.CompleteAdding();
         }
@@ -110,25 +116,35 @@ namespace Worker
 
     class MyTask
     {
+        public int id { get; set; }
         public string name { get; set; }
         public int type { get; set; }
     }
 
-    class DoTask1 : MyTask
+    class MyTask1 : MyTask, IDoTask
     {
-        public void finishTask()
+        public void finishTask(string name, int id)
         {
-            // do something...
-            Thread.Sleep(1000);
+            Console.WriteLine($"Doing Task name: {name}...");
+            Console.WriteLine($"Doing Task ID: {id}...");
+            // do something about Task 1...
+            Thread.Sleep(5000);
         }
     }
 
-    class DoTask2 : MyTask
+    class MyTask2 : MyTask, IDoTask
     {
-        public void finishTask()
+        public void finishTask(string name, int id)
         {
-            // do something...
-            Thread.Sleep(3000);
+            Console.WriteLine($"Doing Task name: {name}...");
+            Console.WriteLine($"Doing Task ID: {id}...");
+            // do something about Task 2...
+            Thread.Sleep(12000);
         }
+    }
+
+    interface IDoTask
+    {
+        void finishTask(string name, int id);
     }
 }
