@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -11,6 +12,19 @@ namespace BackgroundWorker
     {
         public static void Main(string[] args)
         {
+            var root = Directory.GetCurrentDirectory();
+            var dotenv = Path.Combine(root, ".env");
+            DotEnv.Load(dotenv); // loading environment variable
+            // Console.WriteLine(dotenv);
+            // var testEnv = Environment.GetEnvironmentVariable("test");
+            // var testUserName = Environment.GetEnvironmentVariable("RabbitMQ_UserName");
+            // var testPassword = Environment.GetEnvironmentVariable("RabbitMQ_Password");
+            // var testVirtualHost = Environment.GetEnvironmentVariable("RabbitMQ_VirtualHost");
+            // var testHostName = Environment.GetEnvironmentVariable("RabbitMQ_HostName");
+            // Console.WriteLine(testUserName);
+            // Console.WriteLine(testPassword);
+            // Console.WriteLine(testVirtualHost);
+            // Console.WriteLine(testHostName);
             CreateHostBuilder(args).Build().Run();
         }
 

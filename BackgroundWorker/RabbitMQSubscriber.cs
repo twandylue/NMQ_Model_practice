@@ -18,15 +18,10 @@ namespace BackgroundWorker
         private IConnection _connection;
         private IModel _channel;
         private string _consumerTag;
-        // private BlockingCollection<MyTask>[] queues = new BlockingCollection<MyTask>[1 + 2] {
-        //     null,
-        //     new BlockingCollection<MyTask>(),
-        //     new BlockingCollection<MyTask>()
-        // };
-        private ConcurrentQueue<MyTask>[] queues = new ConcurrentQueue<MyTask>[1 + 2] {
+        private BlockingCollection<MyTask>[] queues = new BlockingCollection<MyTask>[1 + 2] {
             null,
-            new ConcurrentQueue<MyTask>(),
-            new ConcurrentQueue<MyTask>()
+            new BlockingCollection<MyTask>(),
+            new BlockingCollection<MyTask>()
         };
         private Func<IDoTask>[] methods = new Func<IDoTask>[1 + 2] {
             null,
@@ -40,18 +35,16 @@ namespace BackgroundWorker
         protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
             var factory = new ConnectionFactory()
-            // env
             {
-                UserName = "root",
-                Password = "admin1234",
-                VirtualHost = "/",
-                HostName = "localhost"
+                UserName = Environment.GetEnvironmentVariable("RabbitMQ_UserName"),
+                Password = Environment.GetEnvironmentVariable("RabbitMQ_Password"),
+                VirtualHost = Environment.GetEnvironmentVariable("RabbitMQ_VirtualHost"),
+                HostName = Environment.GetEnvironmentVariable("RabbitMQ_HostName")
             };
             _connection = factory.CreateConnection();
             _channel = _connection.CreateModel();
-
             _channel.QueueDeclare(
-                queue: "task_queue",
+                queue: Environment.GetEnvironmentVariable("RabbitMQ_Queue"),
                 exclusive: false,
                 autoDelete: false,
                 arguments: null
@@ -68,24 +61,20 @@ namespace BackgroundWorker
                 var body = m.Body.ToArray();
                 var message = Encoding.UTF8.GetString(body);
                 MyTask task = JsonSerializer.Deserialize<MyTask>(message);
-                // this.queues[task.type].Add(task); // add task into queue based on their type
-                this.queues[task.type].Enqueue(task);
+                this.queues[task.type].Add(task); // add task into queue based on their type
                 _logger.LogInformation($" [x] Done: adding task {task.type} into queue");
                 // launching ackowledgment
                 _channel.BasicAck(
                     deliveryTag: m.DeliveryTag,
                     multiple: false
                 );
-                // this.StartRun(); // start threads
             };
-            
             _consumerTag = _channel.BasicConsume(
-                queue: "task_queue",
+                queue: Environment.GetEnvironmentVariable("RabbitMQ_Queue"),
                 autoAck: false,
                 consumer: consumer
             );
             this.StartRun(); // start threads
-            // Thread.Sleep(8000);
             return Task.CompletedTask;
         }
 
@@ -94,10 +83,10 @@ namespace BackgroundWorker
             _channel.BasicCancel(_consumerTag);
             _channel.Close();
             _connection.Close();
-            // for (int type = 1; type <= 2; type++)
-            // {
-            //     this.queues[type].CompleteAdding();
-            // }
+            for (int type = 1; type <= 2; type++)
+            {
+                this.queues[type].CompleteAdding();
+            }
             return base.StopAsync(cancellationToken);
         }
         private void StartRun()
@@ -112,23 +101,14 @@ namespace BackgroundWorker
                     tasks.Add(t);
                 }
             });
-            foreach (var t in tasks) t.Wait();
+            // foreach (var t in tasks) t.Wait(); // 注意
         }
         private void DoAllType(int type)
         {
-            // foreach (var task in this.queues[type].GetConsumingEnumerable()) // 有問題
-            // {
-            //     // this.methods[type]().doTask(task.name, task.id);
-            // };
-            // Console.WriteLine($"new {type}");
-
-            while (!this.queues[type].IsEmpty)
+            foreach (var task in this.queues[type].GetConsumingEnumerable())
             {
-                if (this.queues[type].TryDequeue(out MyTask task))
-                {
-                    this.methods[type]().doTask(task.name, task.id);
-                }
-            }
+                this.methods[type]().doTask(task.name, task.id, _logger);
+            };
         }
     }
 
@@ -140,24 +120,24 @@ namespace BackgroundWorker
     }
     class MyTask1 : IDoTask
     {
-        public void doTask(string name, int id)
+        public void doTask(string name, int id, ILogger<RabbitMQSubscriber> _logger)
         {
-            Console.WriteLine($"Doing Task :{name} | TaskID: {id}");
+            _logger.LogInformation($"Doing {name} | TaskID: {id}");
             // do something in Task 1...
             Thread.Sleep(5000);
         }
     }
     class MyTask2 : IDoTask
     {
-        public void doTask(string name, int id)
+        public void doTask(string name, int id, ILogger<RabbitMQSubscriber> _logger)
         {
-            Console.WriteLine($"Doing Task :{name} | TaskID: {id}");
+            _logger.LogInformation($"Doing {name} | TaskID: {id}");
             // do something in Task 2...
             Thread.Sleep(3000);
         }
     }
     interface IDoTask
     {
-        void doTask(string name, int id);
+        void doTask(string name, int id, ILogger<RabbitMQSubscriber> _logger);
     }
 }

@@ -74,9 +74,7 @@ namespace Worker
         {
             List<Task> tasks = new List<Task>();
             int[] counts = { 0, 2, 3 }; // thread pool
-            for (int type = 1; type <= 2; type++)
-            {
-                Parallel.For(1, counts.Length, (type) =>
+            Parallel.For(1, counts.Length, (type) =>
                 {
                     for (int i = 0; i < counts[type]; i++)
                     {
@@ -84,7 +82,6 @@ namespace Worker
                         tasks.Add(t);
                     }
                 });
-            }
             foreach (var t in tasks) t.Wait();
         }
 
