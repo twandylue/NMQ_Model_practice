@@ -90,8 +90,8 @@ namespace Worker
 
         private BlockingCollection<MyTask>[] queues = new BlockingCollection<MyTask>[1 + 2]{
             null,
-            new BlockingCollection<MyTask>(),
-            new BlockingCollection<MyTask>()
+            new BlockingCollection<MyTask>(), // type 1
+            new BlockingCollection<MyTask>() // type 2
         };
 
         private Func<IDoTask>[] TaskType = new Func<IDoTask>[1 + 2] {
@@ -106,7 +106,6 @@ namespace Worker
             {
                 this.TaskType[type]().finishTask(task.name, task.id);
             }
-            // this.queue.CompleteAdding();
         }
     }
 
@@ -117,7 +116,7 @@ namespace Worker
         public int type { get; set; }
     }
 
-    class MyTask1 : MyTask, IDoTask
+    class MyTask1 : IDoTask
     {
         public void finishTask(string name, int id)
         {
@@ -128,7 +127,7 @@ namespace Worker
         }
     }
 
-    class MyTask2 : MyTask, IDoTask
+    class MyTask2 : IDoTask
     {
         public void finishTask(string name, int id)
         {
