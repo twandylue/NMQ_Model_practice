@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -14,6 +15,10 @@ namespace Subscriber
     {
         static void Main(string[] args)
         {
+            var root = Directory.GetCurrentDirectory();
+            var dotenv = Path.Combine(Directory.GetParent(root).ToString(), ".env");
+            DotEnv.Load(dotenv); // loading environment variable
+
             new RabbitMQSubscriber().getMessage();
             Console.WriteLine(" DONE!");
         }
@@ -34,18 +39,17 @@ namespace Subscriber
         public void getMessage()
         {
             var factory = new ConnectionFactory()
-            // env
             {
-                UserName = "root",
-                Password = "admin1234",
-                VirtualHost = "/",
-                HostName = "localhost"
+                UserName = Environment.GetEnvironmentVariable("RabbitMQ_UserName"),
+                Password = Environment.GetEnvironmentVariable("RabbitMQ_Password"),
+                VirtualHost = Environment.GetEnvironmentVariable("RabbitMQ_VirtualHost"),
+                HostName = Environment.GetEnvironmentVariable("RabbitMQ_HostName")
             };
             using (var connection = factory.CreateConnection())
             using (var channel = connection.CreateModel())
             {
                 channel.QueueDeclare(
-                    queue: "task_queue", // env
+                    queue: Environment.GetEnvironmentVariable("RabbitMQ_Queue"),
                     exclusive: false,
                     autoDelete: false,
                     arguments: null
@@ -72,13 +76,11 @@ namespace Subscriber
                     );
                 };
                 channel.BasicConsume(
-                    queue: "task_queue", // env
+                    queue: Environment.GetEnvironmentVariable("RabbitMQ_Queue"),
                     autoAck: false,
                     consumer: consumer
                 );
                 this.StartRun(); // Start Threads
-                // Console.WriteLine(" Press [enter] to exit");
-                // Console.ReadLine();
             }
         }
         private void StartRun()

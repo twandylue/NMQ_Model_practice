@@ -1,7 +1,8 @@
 ﻿using System;
-using RabbitMQ.Client;
+using System.IO;
 using System.Text;
 using System.Text.Json;
+using RabbitMQ.Client;
 
 namespace Publisher
 {
@@ -9,18 +10,22 @@ namespace Publisher
     {
         static void Main(string[] args)
         {
+            var root = Directory.GetCurrentDirectory();
+            var dotenv = Path.Combine(Directory.GetParent(root).ToString(), ".env");
+            DotEnv.Load(dotenv); // loading environment variable
+
             var factory = new ConnectionFactory()
             {
-                UserName = "root",
-                Password = "admin1234",
-                VirtualHost = "/",
-                HostName = "localhost"
+                UserName = Environment.GetEnvironmentVariable("RabbitMQ_UserName"),
+                Password = Environment.GetEnvironmentVariable("RabbitMQ_Password"),
+                VirtualHost = Environment.GetEnvironmentVariable("RabbitMQ_VirtualHost"),
+                HostName = Environment.GetEnvironmentVariable("RabbitMQ_HostName")
             };
             using (var connection = factory.CreateConnection())
             using (var channel = connection.CreateModel())
             {
                 channel.QueueDeclare(
-                    queue: "task_queue",
+                    queue: Environment.GetEnvironmentVariable("RabbitMQ_Queue"),
                     durable: false,
                     exclusive: false,
                     autoDelete: false,
@@ -32,7 +37,7 @@ namespace Publisher
                     var body = Encoding.UTF8.GetBytes(message);
                     channel.BasicPublish(
                         exchange: "",
-                        routingKey: "task_queue",
+                        routingKey: Environment.GetEnvironmentVariable("RabbitMQ_Queue"),
                         basicProperties: null,
                         body: body
                     );

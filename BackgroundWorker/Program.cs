@@ -13,18 +13,8 @@ namespace BackgroundWorker
         public static void Main(string[] args)
         {
             var root = Directory.GetCurrentDirectory();
-            var dotenv = Path.Combine(root, ".env");
+            var dotenv = Path.Combine(Directory.GetParent(root).ToString(), ".env");
             DotEnv.Load(dotenv); // loading environment variable
-            // Console.WriteLine(dotenv);
-            // var testEnv = Environment.GetEnvironmentVariable("test");
-            // var testUserName = Environment.GetEnvironmentVariable("RabbitMQ_UserName");
-            // var testPassword = Environment.GetEnvironmentVariable("RabbitMQ_Password");
-            // var testVirtualHost = Environment.GetEnvironmentVariable("RabbitMQ_VirtualHost");
-            // var testHostName = Environment.GetEnvironmentVariable("RabbitMQ_HostName");
-            // Console.WriteLine(testUserName);
-            // Console.WriteLine(testPassword);
-            // Console.WriteLine(testVirtualHost);
-            // Console.WriteLine(testHostName);
             CreateHostBuilder(args).Build().Run();
         }
 
@@ -32,7 +22,6 @@ namespace BackgroundWorker
             Host.CreateDefaultBuilder(args)
                 .ConfigureServices((hostContext, services) =>
                 {
-                    // services.AddHostedService<Worker>();
                     services.AddHostedService<RabbitMQSubscriber>();
                 });
     }
