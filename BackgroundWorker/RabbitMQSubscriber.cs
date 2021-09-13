@@ -74,7 +74,8 @@ namespace BackgroundWorker
                 autoAck: false,
                 consumer: consumer
             );
-            this.StartRun(); // start threads
+            this.StartRun(_logger, stoppingToken); // start threads
+            // Console.WriteLine(stoppingToken.IsCancellationRequested);
             return Task.CompletedTask;
         }
 
@@ -83,13 +84,9 @@ namespace BackgroundWorker
             _channel.BasicCancel(_consumerTag);
             _channel.Close();
             _connection.Close();
-            for (int type = 1; type <= 2; type++)
-            {
-                this.queues[type].CompleteAdding();
-            }
             return base.StopAsync(cancellationToken);
         }
-        private void StartRun()
+        private void StartRun(ILogger<RabbitMQSubscriber> _logger, CancellationToken stoppingToken)
         {
             List<Task> tasks = new List<Task>();
             int[] counts = { 0, 2, 3 }; // thread pool
@@ -101,7 +98,16 @@ namespace BackgroundWorker
                     tasks.Add(t);
                 }
             });
-            // foreach (var t in tasks) t.Wait(); // 注意
+            while (!stoppingToken.IsCancellationRequested)
+            {
+            }
+            
+            _logger.LogInformation("Closing application...");
+            for (int type = 1; type <= 2; type++)
+            {
+                this.queues[type].CompleteAdding();
+            }
+            foreach (var t in tasks) t.Wait(); // 注意
         }
         private void DoAllType(int type)
         {
@@ -124,7 +130,7 @@ namespace BackgroundWorker
         {
             _logger.LogInformation($"Doing {name} | TaskID: {id}");
             // do something in Task 1...
-            Thread.Sleep(5000);
+            Thread.Sleep(300);
         }
     }
     class MyTask2 : IDoTask
@@ -133,7 +139,7 @@ namespace BackgroundWorker
         {
             _logger.LogInformation($"Doing {name} | TaskID: {id}");
             // do something in Task 2...
-            Thread.Sleep(3000);
+            Thread.Sleep(500);
         }
     }
     interface IDoTask

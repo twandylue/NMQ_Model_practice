@@ -52,7 +52,6 @@ namespace Publisher
         {
             MyTask task = new MyTask();
             task.id = index;
-
             if (index % 2 == 0)
             {
                 task.type = 1;
