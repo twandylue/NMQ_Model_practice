@@ -75,7 +75,6 @@ namespace BackgroundWorker
                 consumer: consumer
             );
             this.StartRun(_logger, stoppingToken); // start threads
-            // Console.WriteLine(stoppingToken.IsCancellationRequested);
             return Task.CompletedTask;
         }
 
@@ -98,16 +97,12 @@ namespace BackgroundWorker
                     tasks.Add(t);
                 }
             });
-            while (!stoppingToken.IsCancellationRequested)
-            {
-            }
-            
-            _logger.LogInformation("Closing application...");
+            stoppingToken.WaitHandle.WaitOne();
             for (int type = 1; type <= 2; type++)
             {
                 this.queues[type].CompleteAdding();
             }
-            foreach (var t in tasks) t.Wait(); // 注意
+            foreach (var t in tasks) t.Wait();
         }
         private void DoAllType(int type)
         {
