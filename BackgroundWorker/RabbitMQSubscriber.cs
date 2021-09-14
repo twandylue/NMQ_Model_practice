@@ -34,15 +34,29 @@ namespace BackgroundWorker
         }
         protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            var factory = new ConnectionFactory()
+            while (true)
             {
-                UserName = Environment.GetEnvironmentVariable("RabbitMQ_UserName"),
-                Password = Environment.GetEnvironmentVariable("RabbitMQ_Password"),
-                VirtualHost = Environment.GetEnvironmentVariable("RabbitMQ_VirtualHost"),
-                HostName = Environment.GetEnvironmentVariable("RabbitMQ_HostName"),
-                Port = Int16.Parse(Environment.GetEnvironmentVariable("RabbitMQ_Port"))
-            };
-            _connection = factory.CreateConnection();
+                try
+                {
+                    var factory = new ConnectionFactory()
+                    {
+                        UserName = Environment.GetEnvironmentVariable("RabbitMQ_UserName"),
+                        Password = Environment.GetEnvironmentVariable("RabbitMQ_Password"),
+                        VirtualHost = Environment.GetEnvironmentVariable("RabbitMQ_VirtualHost"),
+                        HostName = Environment.GetEnvironmentVariable("RabbitMQ_HostName"),
+                        Port = Int16.Parse(Environment.GetEnvironmentVariable("RabbitMQ_Port"))
+                    };
+                    _connection = factory.CreateConnection();
+                    break;
+                }
+                catch (RabbitMQ.Client.Exceptions.BrokerUnreachableException e)
+                {
+                    _logger.LogInformation($"error: lose connection with RabbitMQ.");
+                    _logger.LogInformation("Trying to re-connect to RabbitMQ in 500 ms later.");
+                    Thread.Sleep(500);
+                }
+            }
+
             _channel = _connection.CreateModel();
             _channel.QueueDeclare(
                 queue: Environment.GetEnvironmentVariable("RabbitMQ_Queue"),
@@ -81,9 +95,16 @@ namespace BackgroundWorker
 
         public override Task StopAsync(CancellationToken cancellationToken)
         {
-            _channel.BasicCancel(_consumerTag);
-            _channel.Close();
-            _connection.Close();
+            try
+            {
+                _channel.BasicCancel(_consumerTag);
+                _channel.Close();
+                _connection.Close();
+            }
+            catch (RabbitMQ.Client.Exceptions.AlreadyClosedException e)
+            {
+                _logger.LogInformation("Already Closed.");
+            }
             return base.StopAsync(cancellationToken);
         }
         private void StartRun(ILogger<RabbitMQSubscriber> _logger, CancellationToken stoppingToken)

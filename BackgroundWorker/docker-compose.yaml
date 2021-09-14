@@ -16,11 +16,11 @@ services:
         container_name: subscriber
         build: .
         hostname: subscriber
-        restart: always
         depends_on:
             - rabbitmq3
         networks: 
             - mynet
+# 待改
 networks:
     mynet:
         external: true
