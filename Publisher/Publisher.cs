@@ -11,7 +11,7 @@ namespace Publisher
         static void Main(string[] args)
         {
             var root = Directory.GetCurrentDirectory();
-            var dotenv = Path.Combine(Directory.GetParent(root).ToString(), ".env");
+            var dotenv = Path.Combine(root.ToString(), ".env");
             DotEnv.Load(dotenv); // loading environment variable
 
             var factory = new ConnectionFactory()

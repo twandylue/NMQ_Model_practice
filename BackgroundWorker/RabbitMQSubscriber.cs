@@ -39,7 +39,8 @@ namespace BackgroundWorker
                 UserName = Environment.GetEnvironmentVariable("RabbitMQ_UserName"),
                 Password = Environment.GetEnvironmentVariable("RabbitMQ_Password"),
                 VirtualHost = Environment.GetEnvironmentVariable("RabbitMQ_VirtualHost"),
-                HostName = Environment.GetEnvironmentVariable("RabbitMQ_HostName")
+                HostName = Environment.GetEnvironmentVariable("RabbitMQ_HostName"),
+                Port = Int16.Parse(Environment.GetEnvironmentVariable("RabbitMQ_Port"))
             };
             _connection = factory.CreateConnection();
             _channel = _connection.CreateModel();
@@ -97,7 +98,7 @@ namespace BackgroundWorker
                     tasks.Add(t);
                 }
             });
-            stoppingToken.WaitHandle.WaitOne();
+            stoppingToken.WaitHandle.WaitOne(); // waiting for stopping signal
             for (int type = 1; type <= 2; type++)
             {
                 this.queues[type].CompleteAdding();

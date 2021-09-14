@@ -1,0 +1,26 @@
+version: "3.8"
+services:
+    rabbitmq3:
+        container_name: rabbitmq
+        image: rabbitmq:management
+        hostname: rabbitmqHost
+        environment:
+            - RABBITMQ_DEFAULT_USER=root
+            - RABBITMQ_DEFAULT_PASS=admin1234
+        ports:
+            - '5672:5672'
+            - '15672:15672'
+        networks:
+            - mynet
+    backgoundworker:
+        container_name: subscriber
+        build: .
+        hostname: subscriber
+        restart: always
+        depends_on:
+            - rabbitmq3
+        networks: 
+            - mynet
+networks:
+    mynet:
+        external: true
