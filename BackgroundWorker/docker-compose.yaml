@@ -1,4 +1,4 @@
-version: "3.8"
+version: "3.9"
 services:
     rabbitmq3:
         container_name: rabbitmq
@@ -16,7 +16,7 @@ services:
             timeout: 2s
             retries: 30
         networks:
-            - mynetTest
+            - myNet
     backgoundworker:
         container_name: subscriber
         build: .
@@ -24,7 +24,11 @@ services:
         depends_on:
             rabbitmq3:
                 condition: service_healthy
+        volumes:
+        - type: bind
+          source: ./.env
+          target: /app/.env
         networks: 
-            - mynetTest
+            - myNet
 networks:
-    mynetTest:
+    myNet:
