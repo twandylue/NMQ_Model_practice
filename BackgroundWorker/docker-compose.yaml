@@ -10,17 +10,21 @@ services:
         ports:
             - '5672:5672'
             - '15672:15672'
+        healthcheck:
+            test: rabbitmq-diagnostics -q status
+            interval: 1s
+            timeout: 2s
+            retries: 30
         networks:
-            - mynet
+            - mynetTest
     backgoundworker:
         container_name: subscriber
         build: .
         hostname: subscriber
         depends_on:
-            - rabbitmq3
+            rabbitmq3:
+                condition: service_healthy
         networks: 
-            - mynet
-# 待改
+            - mynetTest
 networks:
-    mynet:
-        external: true
+    mynetTest:

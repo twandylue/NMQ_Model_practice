@@ -1,5 +1,12 @@
-# dotenv environment variables file
+# environment variables file
 .env
 
 # vscode
 .vscode
+
+bin
+obj
+Properties
+
+# for local test
+Subscriber
