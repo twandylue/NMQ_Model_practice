@@ -17,12 +17,14 @@ namespace BackgroundWorker
         private readonly ILogger<RabbitMQSubscriber> _logger;
         private IConnection _connection;
         private IModel _channel;
+        private IModel _channelPub;
         private string _consumerTag;
         private BlockingCollection<MyTask>[] queues = new BlockingCollection<MyTask>[1 + 2] {
             null,
             new BlockingCollection<MyTask>(),
             new BlockingCollection<MyTask>()
         };
+        private BlockingCollection<MyTask> doneTasks_queue = new BlockingCollection<MyTask>();
         private Func<IDoTask>[] methods = new Func<IDoTask>[1 + 2] {
             null,
             ()=> new MyTask1(),
@@ -89,7 +91,12 @@ namespace BackgroundWorker
                 autoAck: false,
                 consumer: consumer
             );
-            this.StartRun(_logger, stoppingToken); // start threads
+            // this.StartRun(_logger, stoppingToken);
+            Task RunTask = Task.Run(() => { this.StartRun(_logger, stoppingToken); }); // start threads
+            Task PublishTask = Task.Run(() => { this.PublishDoneTasks(_logger, stoppingToken, _connection); }); // start publish done task message
+            RunTask.Wait();
+            this.doneTasks_queue.CompleteAdding();
+            PublishTask.Wait();
             return Task.CompletedTask;
         }
 
@@ -99,6 +106,7 @@ namespace BackgroundWorker
             {
                 _channel.BasicCancel(_consumerTag);
                 _channel.Close();
+                _channelPub.Close();
                 _connection.Close();
             }
             catch (RabbitMQ.Client.Exceptions.AlreadyClosedException e)
@@ -131,7 +139,30 @@ namespace BackgroundWorker
             foreach (var task in this.queues[type].GetConsumingEnumerable())
             {
                 this.methods[type]().doTask(task.name, task.id, _logger);
+                this.doneTasks_queue.Add(task);
             };
+        }
+        private void PublishDoneTasks(ILogger<RabbitMQSubscriber> _logger, CancellationToken stoppingToken, IConnection conn)
+        {
+            this._channelPub = conn.CreateModel();
+            this._channelPub.QueueDeclare(
+                queue: Environment.GetEnvironmentVariable("RabbitMQ_Done_Queue"),
+                exclusive: false,
+                autoDelete: false,
+                arguments: null
+            );
+            foreach (var task in doneTasks_queue.GetConsumingEnumerable())
+            {
+                string message = JsonSerializer.Serialize<MyTask>(task);
+                var body = Encoding.UTF8.GetBytes(message);
+                this._channelPub.BasicPublish(
+                    exchange: "",
+                    routingKey: Environment.GetEnvironmentVariable("RabbitMQ_Done_Queue"),
+                    basicProperties: null,
+                    body: body
+                );
+                _logger.LogInformation($" [x] Sent {message}");
+            }
         }
     }
 
