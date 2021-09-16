@@ -1,6 +1,0 @@
-D:\91APP\NMQ_Model_practice\Publisher\out\Publisher.exe
-D:\91APP\NMQ_Model_practice\Publisher\out\Publisher.dll
-D:\91APP\NMQ_Model_practice\Publisher\out\Publisher.deps.json
-D:\91APP\NMQ_Model_practice\Publisher\out\Publisher.runtimeconfig.json
-D:\91APP\NMQ_Model_practice\Publisher\out\Publisher.pdb
-D:\91APP\NMQ_Model_practice\Publisher\out\RabbitMQ.Client.dll
