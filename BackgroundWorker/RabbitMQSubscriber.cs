@@ -178,7 +178,7 @@ namespace BackgroundWorker
         {
             _logger.LogInformation($"Doing {name} | TaskID: {id}");
             // do something in Task 1...
-            Thread.Sleep(300);
+            Thread.Sleep(600);
         }
     }
     class MyTask2 : IDoTask
@@ -187,7 +187,7 @@ namespace BackgroundWorker
         {
             _logger.LogInformation($"Doing {name} | TaskID: {id}");
             // do something in Task 2...
-            Thread.Sleep(500);
+            Thread.Sleep(1000);
         }
     }
     interface IDoTask

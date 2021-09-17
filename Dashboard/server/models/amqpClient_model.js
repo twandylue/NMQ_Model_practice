@@ -2,7 +2,7 @@ require("dotenv").config();
 const amqp = require("amqplib");
 const EventEmitter = require("events");
 // eslint-disable-next-line camelcase
-const { RabbitMQ_UserName, RabbitMQ_Password, RabbitMQ_VirtualHost, RabbitMQ_HostName, RabbitMQ_Port, RabbitMQ_Queue } = process.env;
+const { RabbitMQ_UserName, RabbitMQ_Password, RabbitMQ_VirtualHost, RabbitMQ_HostName, RabbitMQ_Port, RabbitMQ_taskQueue, RabbitMQ_doneQueue } = process.env;
 const opt = {
     hostname: RabbitMQ_HostName,
     port: RabbitMQ_Port,
@@ -15,7 +15,7 @@ const subscribe = async () => {
     const channel = await connect.createChannel();
     const consumeEmitter = new EventEmitter();
     try {
-        channel.consume(RabbitMQ_Queue, message => {
+        channel.consume(RabbitMQ_doneQueue, message => {
             if (message !== null) {
                 consumeEmitter.emit("data", message.content.toString());
             } else {
@@ -25,11 +25,26 @@ const subscribe = async () => {
             channel.ack(message);
         }, { noAck: false });
     } catch (error) {
-        consumeEmitter("error", error);
+        consumeEmitter("consume error", error);
     }
     return consumeEmitter;
 };
 
+const publish = async () => {
+    const connect = await amqp.connect(opt);
+    const channel = await connect.createChannel();
+    const msg = "test";
+    try {
+        channel.assertQueue(RabbitMQ_taskQueue, {
+            durable: false
+        });
+        channel.sendToQueue(RabbitMQ_taskQueue, Buffer.from(msg));
+    } catch (error) {
+        console.log(`error in publish: ${error}`);
+    }
+};
+
 module.exports = {
-    subscribe
+    subscribe,
+    publish
 };
