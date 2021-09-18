@@ -1,6 +1,8 @@
 require("dotenv").config();
 const amqp = require("amqplib");
 const EventEmitter = require("events");
+const { Task } = require("../models/tasks");
+
 // eslint-disable-next-line camelcase
 const { RabbitMQ_UserName, RabbitMQ_Password, RabbitMQ_VirtualHost, RabbitMQ_HostName, RabbitMQ_Port, RabbitMQ_taskQueue, RabbitMQ_doneQueue } = process.env;
 const opt = {
@@ -25,23 +27,38 @@ const subscribe = async () => {
             channel.ack(message);
         }, { noAck: false });
     } catch (error) {
+        // create work queue 待補 或是先啟動background service
         consumeEmitter("consume error", error);
     }
     return consumeEmitter;
 };
 
-const publish = async () => {
+const publish = async (data) => {
+    const taskQueue = await PutTasksInQueue(data);
     const connect = await amqp.connect(opt);
     const channel = await connect.createChannel();
-    const msg = "test";
-    try {
-        channel.assertQueue(RabbitMQ_taskQueue, {
-            durable: false
-        });
-        channel.sendToQueue(RabbitMQ_taskQueue, Buffer.from(msg));
-    } catch (error) {
-        console.log(`error in publish: ${error}`);
+    channel.assertQueue(RabbitMQ_taskQueue, { durable: false });
+    while (taskQueue.length > 0) {
+        try {
+            const msg = taskQueue.shift();
+            channel.sendToQueue(RabbitMQ_taskQueue, Buffer.from(msg));
+        } catch (e) {
+            console.log(`erroe in publish: ${e}`);
+        }
     }
+};
+
+const PutTasksInQueue = (data) => {
+    return new Promise((resolve, reject) => {
+        const queue = [];
+        for (const item of data) {
+            for (let i = 0; i < item.number; i++) {
+                const task = new Task(i, item.type);
+                queue.push(JSON.stringify(task));
+            }
+        }
+        resolve(queue);
+    });
 };
 
 module.exports = {

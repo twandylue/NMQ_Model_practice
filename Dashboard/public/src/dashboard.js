@@ -1,3 +1,6 @@
+import { io } from "./node_modules/socket.io-client/build/socket";
+// const io = require("socket.io-client");
+console.log(io);
 const socket = io({
     reconnect: true
 });

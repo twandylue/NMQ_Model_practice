@@ -1,5 +1,4 @@
 const { subscribe, publish } = require("../models/amqpClient_model");
-
 const getMessage = async (req, res) => {
     const consumerEmitter = await subscribe();
     consumerEmitter.on("data", (message) => {
@@ -9,9 +8,8 @@ const getMessage = async (req, res) => {
 };
 
 const publishMessage = async (req, res) => {
-    const { type, number } = req.body;
-    console.log({ type, number });
-    // publish();
+    const { data } = req.body;
+    publish(data);
     res.status(200).send("test publish");
 };
 

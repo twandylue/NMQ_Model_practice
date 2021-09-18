@@ -4,7 +4,7 @@ const { subscribe } = require("../models/amqpClient_model");
 const socket = async (io) => {
     const consumerEmitter = await subscribe();
     io.on("connection", async (socket) => {
-        console.log("Connected!");
+        console.log("WebSocket Connected!");
         consumerEmitter.on("data", (message) => {
             console.log(`On socket: ${message}`);
             socket.emit("newData", message);
