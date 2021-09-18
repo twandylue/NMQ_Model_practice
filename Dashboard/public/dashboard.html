@@ -12,11 +12,34 @@
             My NMQ Model Dashboard
         </div>
         <div id = "container">
-            <div id="myDiv" class="plot">
-                waiting...
+            <div id="init-title">
+                <div id="title-content">
+                    waiting...
+                </div>
             </div>
+            <!-- <div id="myDiv" class="plot"></div> -->
             <div id="information">
-                <div style="cursor: pointer" id="send">送出</div>
+                <div id = "task-info">
+                    <div id = "title">Task 設定</div>
+                    <div id = "block">
+                        <div id = "task1" class = "task-block">
+                            <div id = "task-name" class = "task-content">Task 1</div>
+                            <div id = "task-type" class = "task-content">Type: 1</div>
+                            <input id = "task1-number" class = "task-content task-number" placeholder="Task 1 目標數量" value="20">
+                        </div>
+                        <div id = "task2" class = "task-block">
+                            <div id = "task-name" class = "task-content">Task 2</div>
+                            <div id = "task-type" class = "task-content">Type: 2</div>
+                            <input id = "task2-number" class = "task-content task-number" placeholder="Task 2 目標數量" value="30">
+                        </div>
+                    </div>
+                </div>
+                <div id = "sendMsg">
+                    <li style="cursor: pointer" id = "button">
+                        送出
+                        <span></span><span></span><span></span><span></span>
+                    </li>
+                </div>
             </div>
         </div>
         <script src = "/socket.io/socket.io.js"></script>
