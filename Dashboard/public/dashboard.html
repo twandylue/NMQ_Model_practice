@@ -8,14 +8,18 @@
         <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     </head>
     <body>
-        <!-- <div id="count" class="info_block">
-            <div id="number"></div>
+        <div id = "header">
+            My NMQ Model Dashboard
         </div>
-        <div id="pie" class="info_block"></div>
-        <div id="histogram" class="info_block"></div>
-        <div id="bar" class="info_block"></div> -->
-        <div id="myDiv"></div>
-        <!-- <script src = "/socket.io/socket.io.js"></script> -->
+        <div id = "container">
+            <div id="myDiv" class="plot">
+                waiting...
+            </div>
+            <div id="information">
+                <div style="cursor: pointer" id="send">送出</div>
+            </div>
+        </div>
+        <script src = "/socket.io/socket.io.js"></script>
         <script src = "./src/dashboard.js" type = "module"></script>
     </body>
 </html>
