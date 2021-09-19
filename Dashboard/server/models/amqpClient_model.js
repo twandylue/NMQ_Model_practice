@@ -28,7 +28,6 @@ const subscribe = async () => {
             channel.ack(message);
         }, { noAck: false });
     } catch (error) {
-        // create work queue 待補 或是先啟動background service
         consumeEmitter("consume error", error);
     }
     return consumeEmitter;
