@@ -1,12 +1,20 @@
+# for node modules
+node_modules
+
+bin
+obj
+
+# dump
+dump.rdb
+
 # environment variables file
 .env
 
 # vscode
 .vscode
 
-bin
-obj
-Properties
+# Mac
+.DS_Store
 
-# for local test
-Subscriber
+# eslint
+.eslintrc.json

@@ -12,6 +12,7 @@ const opt = {
     password: RabbitMQ_Password,
     vhost: RabbitMQ_VirtualHost
 };
+
 const subscribe = async () => {
     const connect = await amqp.connect(opt);
     const channel = await connect.createChannel();
