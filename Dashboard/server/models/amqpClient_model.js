@@ -6,7 +6,7 @@ const { Task } = require("../models/tasks");
 // eslint-disable-next-line camelcase
 const { RabbitMQ_UserName, RabbitMQ_Password, RabbitMQ_VirtualHost, RabbitMQ_HostName, RabbitMQ_Port, RabbitMQ_taskQueue, RabbitMQ_doneQueue } = process.env;
 const opt = {
-    hostname: RabbitMQ_HostName,
+    hostname: RabbitMQ_HostName === undefined ? "localhost" : RabbitMQ_HostName,
     port: RabbitMQ_Port,
     username: RabbitMQ_UserName,
     password: RabbitMQ_Password,
@@ -18,8 +18,9 @@ const subscribe = async () => {
     const channel = await connect.createChannel();
     const consumeEmitter = new EventEmitter();
     try {
-        channel.assertQueue(RabbitMQ_doneQueue, { durable: false }); // create queue if not exist
+        channel.assertQueue(RabbitMQ_doneQueue, { durable: false }); // create a queue if not exist
         channel.consume(RabbitMQ_doneQueue, message => {
+            console.log(` [x] Received done task: ${message.content.toString()}`);
             if (message !== null) {
                 consumeEmitter.emit("data", message.content.toString());
             } else {

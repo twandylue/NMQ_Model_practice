@@ -6,7 +6,6 @@ const socket = async (io) => {
     io.on("connection", async (socket) => {
         console.log("WebSocket Connected!");
         consumerEmitter.on("data", (message) => {
-            console.log(`On socket: ${message}`);
             socket.emit("newData", message);
         });
         socket.on("disconnect", () => {

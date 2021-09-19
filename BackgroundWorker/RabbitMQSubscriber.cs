@@ -45,7 +45,7 @@ namespace BackgroundWorker
                         UserName = Environment.GetEnvironmentVariable("RabbitMQ_UserName"),
                         Password = Environment.GetEnvironmentVariable("RabbitMQ_Password"),
                         VirtualHost = Environment.GetEnvironmentVariable("RabbitMQ_VirtualHost"),
-                        HostName = Environment.GetEnvironmentVariable("RabbitMQ_HostName"),
+                        HostName = Environment.GetEnvironmentVariable("RabbitMQ_HostName") == null ? "localhost" : Environment.GetEnvironmentVariable("RabbitMQ_HostName"),
                         Port = Int16.Parse(Environment.GetEnvironmentVariable("RabbitMQ_Port"))
                     };
                     _connection = factory.CreateConnection();
@@ -118,15 +118,21 @@ namespace BackgroundWorker
         private void StartRun(ILogger<RabbitMQSubscriber> _logger, CancellationToken stoppingToken)
         {
             List<Task> tasks = new List<Task>();
-            int[] counts = { 0, 2, 3 }; // thread pool
-            Parallel.For(1, counts.Length, (type) =>
+            int[] counts = { 
+                    0, 
+                    Int16.Parse(Environment.GetEnvironmentVariable("TASK1_THREAD_NUMBER")), 
+                    Int16.Parse(Environment.GetEnvironmentVariable("TASK2_THREAD_NUMBER"))
+                }; // thread pool
+            for (int i = 0; i < counts.Length; i++) 
             {
-                for (int i = 0; i < counts[type]; i++)
-                {
-                    Task t = Task.Run(() => { this.DoAllType(type); });
-                    tasks.Add(t);
-                }
-            });
+                for (int j = 0; j < counts[i]; j++)
+                    {
+                        int index = i;
+                        Task t = Task.Run(() => { this.DoAllType(index); });
+                        tasks.Add(t);
+                    }
+            }
+            
             stoppingToken.WaitHandle.WaitOne(); // waiting for stopping signal
             for (int type = 1; type <= 2; type++)
             {
@@ -178,7 +184,7 @@ namespace BackgroundWorker
         {
             _logger.LogInformation($"Doing {name} | TaskID: {id}");
             // do something in Task 1...
-            Thread.Sleep(600);
+            Thread.Sleep(Int16.Parse(Environment.GetEnvironmentVariable("TASK1_THREAD_PROCESS_TIME")));
         }
     }
     class MyTask2 : IDoTask
@@ -187,7 +193,7 @@ namespace BackgroundWorker
         {
             _logger.LogInformation($"Doing {name} | TaskID: {id}");
             // do something in Task 2...
-            Thread.Sleep(1000);
+            Thread.Sleep(Int16.Parse(Environment.GetEnvironmentVariable("TASK2_THREAD_RPOCESS_TIME")));
         }
     }
     interface IDoTask

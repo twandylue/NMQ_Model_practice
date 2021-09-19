@@ -20,12 +20,13 @@ const task2 = new TaskPlot("Task 2", 0, 0);
 const publishTask = document.querySelector("#sendMsg");
 const inputTask1 = document.querySelector("#task1-number");
 const inputTask2 = document.querySelector("#task2-number");
+
 publishTask.addEventListener("click", async () => {
-    insertPlotyBlock(); // init block for ploty
+    if (document.querySelector("#myDiv") === null) insertPlotyBlock(); // init block for ploty
     if (inputTask1.value < 0) inputTask1.value = 0;
     else if (inputTask2.value < 0) inputTask2.value = 0;
-    task1.targetNumber = inputTask1.value;
-    task2.targetNumber = inputTask2.value;
+    task1.targetNumber += parseInt(inputTask1.value);
+    task2.targetNumber += parseInt(inputTask2.value);
     const inputData = {
         data: [
             { type: 1, number: inputTask1.value }, { type: 2, number: inputTask2.value }
@@ -44,7 +45,7 @@ publishTask.addEventListener("click", async () => {
 
 socket.on("newData", (message) => {
     const task = JSON.parse(message);
-    // console.log(task);
+    console.log(message);
     if (task.type === 1) task1.doneNumber++;
     else if (task.type === 2) task2.doneNumber++;
 
@@ -72,7 +73,7 @@ const insertPlotyBlock = () => {
     ploty.id = "myDiv";
     ploty.className = "plot";
 
-    document.querySelector("#init-title").remove();
+    if (document.querySelector("#init-title") !== null) document.querySelector("#init-title").remove();
     const existingParentElement = document.querySelector("#container");
     existingParentElement.insertBefore(ploty, existingParentElement.childNodes[0]);
 };
