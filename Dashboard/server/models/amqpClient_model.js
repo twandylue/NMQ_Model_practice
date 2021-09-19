@@ -17,6 +17,7 @@ const subscribe = async () => {
     const channel = await connect.createChannel();
     const consumeEmitter = new EventEmitter();
     try {
+        channel.assertQueue(RabbitMQ_doneQueue, { durable: false }); // create queue if not exist
         channel.consume(RabbitMQ_doneQueue, message => {
             if (message !== null) {
                 consumeEmitter.emit("data", message.content.toString());

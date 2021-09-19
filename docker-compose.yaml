@@ -8,8 +8,8 @@ services:
             - RABBITMQ_DEFAULT_USER=root
             - RABBITMQ_DEFAULT_PASS=admin1234
         ports:
-            - '5672:5672'
-            - '15672:15672'
+            - "5672:5672"
+            - "15672:15672"
         healthcheck:
             test: rabbitmq-diagnostics -q status
             interval: 1s
@@ -19,16 +19,33 @@ services:
             - myNet
     backgoundworker:
         container_name: subscriber
-        build: .
+        build: 
+            context: ./BackgroundWorker
         hostname: subscriber
         depends_on:
             rabbitmq3:
                 condition: service_healthy
         volumes:
         - type: bind
-          source: ./.env
+          source: ./BackgroundWorker/.env
           target: /app/.env
         networks: 
+            - myNet
+    dashboard:
+        container_name: NMQ_dashboard
+        build:
+            context: ./Dashboard
+        hostname: NMQ_dashboard
+        ports:
+            - "3001:3001"
+        depends_on:
+            rabbitmq3:
+                condition: service_healthy
+        volumes:
+          - type: bind
+            source: ./Dashboard/.env
+            target: /app/.env
+        networks:
             - myNet
 networks:
     myNet:
