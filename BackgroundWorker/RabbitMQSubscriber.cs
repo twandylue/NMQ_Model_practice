@@ -61,7 +61,7 @@ namespace BackgroundWorker
 
             _channel = _connection.CreateModel();
             _channel.QueueDeclare(
-                queue: Environment.GetEnvironmentVariable("RabbitMQ_Queue"),
+                queue: Environment.GetEnvironmentVariable("RabbitMQ_TASK_Queue"),
                 exclusive: false,
                 autoDelete: false,
                 arguments: null
@@ -87,7 +87,7 @@ namespace BackgroundWorker
                 );
             };
             _consumerTag = _channel.BasicConsume(
-                queue: Environment.GetEnvironmentVariable("RabbitMQ_Queue"),
+                queue: Environment.GetEnvironmentVariable("RabbitMQ_TASK_Queue"),
                 autoAck: false,
                 consumer: consumer
             );
@@ -151,7 +151,7 @@ namespace BackgroundWorker
         {
             this._channelPub = conn.CreateModel();
             this._channelPub.QueueDeclare(
-                queue: Environment.GetEnvironmentVariable("RabbitMQ_Done_Queue"),
+                queue: Environment.GetEnvironmentVariable("RabbitMQ_DONE_TASK_Queue"),
                 exclusive: false,
                 autoDelete: false,
                 arguments: null
@@ -162,7 +162,7 @@ namespace BackgroundWorker
                 var body = Encoding.UTF8.GetBytes(message);
                 this._channelPub.BasicPublish(
                     exchange: "",
-                    routingKey: Environment.GetEnvironmentVariable("RabbitMQ_Done_Queue"),
+                    routingKey: Environment.GetEnvironmentVariable("RabbitMQ_DONE_TASK_Queue"),
                     basicProperties: null,
                     body: body
                 );

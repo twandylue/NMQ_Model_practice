@@ -4,7 +4,7 @@ const EventEmitter = require("events");
 const { Task } = require("../models/tasks");
 
 // eslint-disable-next-line camelcase
-const { RabbitMQ_UserName, RabbitMQ_Password, RabbitMQ_VirtualHost, RabbitMQ_HostName, RabbitMQ_Port, RabbitMQ_taskQueue, RabbitMQ_doneQueue } = process.env;
+const { RabbitMQ_UserName, RabbitMQ_Password, RabbitMQ_VirtualHost, RabbitMQ_HostName, RabbitMQ_Port, RabbitMQ_TASK_Queue, RabbitMQ_DONE_TASK_Queue } = process.env;
 const opt = {
     hostname: RabbitMQ_HostName === undefined ? "localhost" : RabbitMQ_HostName,
     port: RabbitMQ_Port,
@@ -18,8 +18,8 @@ const subscribe = async () => {
     const channel = await connect.createChannel();
     const consumeEmitter = new EventEmitter();
     try {
-        channel.assertQueue(RabbitMQ_doneQueue, { durable: false }); // create a queue if not exist
-        channel.consume(RabbitMQ_doneQueue, message => {
+        channel.assertQueue(RabbitMQ_DONE_TASK_Queue, { durable: false }); // create a queue if not exist
+        channel.consume(RabbitMQ_DONE_TASK_Queue, message => {
             console.log(` [x] Received done task: ${message.content.toString()}`);
             if (message !== null) {
                 consumeEmitter.emit("data", message.content.toString());
@@ -39,11 +39,11 @@ const publish = async (data) => {
     const taskQueue = await PutTasksInQueue(data);
     const connect = await amqp.connect(opt);
     const channel = await connect.createChannel();
-    channel.assertQueue(RabbitMQ_taskQueue, { durable: false });
+    channel.assertQueue(RabbitMQ_TASK_Queue, { durable: false });
     while (taskQueue.length > 0) {
         try {
             const msg = taskQueue.shift();
-            channel.sendToQueue(RabbitMQ_taskQueue, Buffer.from(msg));
+            channel.sendToQueue(RabbitMQ_TASK_Queue, Buffer.from(msg));
         } catch (e) {
             console.log(`erroe in publish: ${e}`);
         }
