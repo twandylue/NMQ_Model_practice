@@ -27,7 +27,7 @@ body {
     border-bottom:#003049 solid 0.26rem;
     background: radial-gradient(circle,#f5faf5 ,#efe5dc);
     border-radius: 2px;
-    font-size: 2.5rem;
+    font-size: 2.8rem;
     font-family: 'Gloria Hallelujah', cursive;
 }
 
@@ -36,7 +36,6 @@ body {
     flex-direction: row;
     justify-content: space-evenly;
     width: 90%;
-    /* height: 93%; */
     height: 600px;
 }
 
@@ -55,7 +54,6 @@ body {
     flex-direction: column;
     justify-content: space-around;
     width: 35%;
-    /* background-color: rgb(174, 169, 199); */
 }
 
 #task-info {
@@ -65,8 +63,13 @@ body {
 }
 
 #title {
-    font-size: 2.0rem;
+    font-family: 'Gloria Hallelujah', cursive;
+    font-size: 2.2rem;
     margin: 2px auto 8%;
+}
+
+#title-content {
+    font-family: 'Gloria Hallelujah', cursive;
 }
 
 #block{
@@ -77,6 +80,7 @@ body {
 }
 
 .task-block {
+    font-family: 'Gloria Hallelujah', cursive;
     display: flex;
     flex-direction: column;
     width: 45%;
@@ -110,22 +114,22 @@ body {
     list-style-type: none;
     --c: #2B2D42;
     color: var(--c);
-    font-size: 14px;
+    font-size: 16px;
     border: 0.15em solid var(--c);
     border-radius: 0.5em;
     width: 10em;
     height: 3.3em;
     text-transform: uppercase;
     font-weight: bold;
-    font-family: sans-serif;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.2em;
     text-align: center;
     line-height: 3em;
     position: relative;
     overflow: hidden;
     z-index: 1;
     transition: 0.5s;
-    margin: 1em;
+    margin: 1.2em;
+    font-family: 'Gloria Hallelujah', cursive;
 }
 
 #sendMsg li span {
