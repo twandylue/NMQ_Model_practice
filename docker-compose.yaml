@@ -1,7 +1,7 @@
 version: "3.9"
 services:
     rabbitmq3:
-        container_name: rabbitmq
+        container_name: Rabbitmq
         image: rabbitmq:management
         hostname: rabbitmqHost
         environment:
@@ -16,12 +16,12 @@ services:
             timeout: 2s
             retries: 30
         networks:
-            - myNet
+            - myNetwork
     backgoundworker:
-        container_name: subscriber
+        container_name: Worker
         build: 
             context: ./BackgroundWorker
-        hostname: subscriber
+        hostname: worker
         depends_on:
             rabbitmq3:
                 condition: service_healthy
@@ -30,7 +30,7 @@ services:
           source: ./BackgroundWorker/.env
           target: /app/.env
         networks: 
-            - myNet
+            - myNetwork
     dashboard:
         container_name: NMQ_dashboard
         build:
@@ -46,6 +46,6 @@ services:
             source: ./Dashboard/.env
             target: /app/.env
         networks:
-            - myNet
+            - myNetwork
 networks:
-    myNet:
+    myNetwork:

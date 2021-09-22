@@ -36,7 +36,7 @@ namespace BackgroundWorker
         }
         protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            while (true)
+            while (true) // reconnect to rabbitmq if connection failed
             {
                 try
                 {
@@ -78,7 +78,7 @@ namespace BackgroundWorker
                 var body = m.Body.ToArray();
                 var message = Encoding.UTF8.GetString(body);
                 MyTask task = JsonSerializer.Deserialize<MyTask>(message);
-                this.queues[task.type].Add(task); // add task into queue based on their type
+                this.queues[task.type].Add(task); // add tasks into queue by their type
                 _logger.LogInformation($" [x] Done: adding task {task.type} into queue");
                 // launching ackowledgment
                 _channel.BasicAck(
@@ -91,12 +91,11 @@ namespace BackgroundWorker
                 autoAck: false,
                 consumer: consumer
             );
-            // this.StartRun(_logger, stoppingToken);
-            Task RunTask = Task.Run(() => { this.StartRun(_logger, stoppingToken); }); // start threads
-            Task PublishTask = Task.Run(() => { this.PublishDoneTasks(_logger, stoppingToken, _connection); }); // start publish done task message
-            RunTask.Wait();
-            this.doneTasks_queue.CompleteAdding();
-            PublishTask.Wait();
+            Task RunTask = Task.Run(() => { this.StartRun(_logger, stoppingToken); }); // start unit threads
+            Task PublishDoneTask = Task.Run(() => { this.PublishDoneTasks(_logger, stoppingToken, _connection); }); // start to publish done task message
+            RunTask.Wait(); // all unit threads stop before publishDonTask thread 
+            this.doneTasks_queue.CompleteAdding(); // closing blockingcollection of done tasks queue
+            PublishDoneTask.Wait();
             return Task.CompletedTask;
         }
 
@@ -118,21 +117,21 @@ namespace BackgroundWorker
         private void StartRun(ILogger<RabbitMQSubscriber> _logger, CancellationToken stoppingToken)
         {
             List<Task> tasks = new List<Task>();
-            int[] counts = { 
-                    0, 
-                    Int16.Parse(Environment.GetEnvironmentVariable("TASK1_THREAD_NUMBER")), 
+            int[] counts = {
+                    0,
+                    Int16.Parse(Environment.GetEnvironmentVariable("TASK1_THREAD_NUMBER")),
                     Int16.Parse(Environment.GetEnvironmentVariable("TASK2_THREAD_NUMBER"))
                 }; // thread pool
-            for (int i = 0; i < counts.Length; i++) 
+            for (int i = 0; i < counts.Length; i++)
             {
                 for (int j = 0; j < counts[i]; j++)
-                    {
-                        int index = i;
-                        Task t = Task.Run(() => { this.DoAllType(index); });
-                        tasks.Add(t);
-                    }
+                {
+                    int index = i;
+                    Task t = Task.Run(() => { this.DoAllType(index); });
+                    tasks.Add(t);
+                }
             }
-            
+
             stoppingToken.WaitHandle.WaitOne(); // waiting for stopping signal
             for (int type = 1; type <= 2; type++)
             {
