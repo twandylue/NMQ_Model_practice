@@ -12,7 +12,9 @@
 
 ## Deployment
 ### Docker login
-- ```docker loging docker-lab.build.91app.io```
+```
+docker login docker-lab.build.91app.io
+```
 
 ### 前置準備 
 於資料夾```BackgroundWorker```和```Dashboard```下創建```.env```檔案
