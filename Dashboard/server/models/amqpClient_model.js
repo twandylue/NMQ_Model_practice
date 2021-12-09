@@ -18,7 +18,7 @@ const subscribe = async () => {
     const channel = await connect.createChannel();
     const consumeEmitter = new EventEmitter();
     try {
-        channel.assertQueue(RabbitMQ_DONE_TASK_Queue, { durable: false }); // create a queue if not exist
+        channel.assertQueue(RabbitMQ_DONE_TASK_Queue, { durable: true }); // create a queue if not exist
         channel.consume(RabbitMQ_DONE_TASK_Queue, message => {
             console.log(` [x] Received done task: ${message.content.toString()}`);
             if (message !== null) {
@@ -39,7 +39,7 @@ const publish = async (data) => {
     const taskQueue = await PutTasksInQueue(data);
     const connect = await amqp.connect(opt);
     const channel = await connect.createChannel();
-    channel.assertQueue(RabbitMQ_TASK_Queue, { durable: false });
+    channel.assertQueue(RabbitMQ_TASK_Queue, { durable: true });
     while (taskQueue.length > 0) {
         try {
             const msg = taskQueue.shift();

@@ -1,0 +1,10 @@
+# RabbitMQ StatefulSet ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rabbitmq-config
+  labels:
+    app: rabbitmq
+data:
+  RABBITMQ_DEFAULT_USER: root
+  RABBITMQ_DEFAULT_PASS: admin1234

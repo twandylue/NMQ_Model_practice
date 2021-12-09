@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq
+spec:
+  selector:
+    matchLabels:
+      app: rabbitmq
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: rabbitmq
+    spec:
+      containers:
+        - name: rabbitmq
+          image: rabbitmq:management
+          ports:
+            - containerPort: 15672
+              name: rabbitdashboard
+            - containerPort: 5672
+              name: rabbitport
+          # Config from ConfigMap
+          envFrom:
+          - configMapRef:
+              name: rabbitmq-config
+          resources:
+            limits:
+              cpu: 500m
+              memory: 5Gi
+            requests:
+              cpu: 500m
+              memory: 5Gi
+      volumes:
+        - name: env-config-volume
+          configMap:
+            defaultMode: 400
+            name: nmq-config-files
+            optional: true

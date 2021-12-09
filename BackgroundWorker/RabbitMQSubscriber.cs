@@ -21,8 +21,8 @@ namespace BackgroundWorker
         private string _consumerTag;
         private BlockingCollection<MyTask>[] queues = new BlockingCollection<MyTask>[1 + 2] {
             null,
-            new BlockingCollection<MyTask>(),
-            new BlockingCollection<MyTask>()
+            new BlockingCollection<MyTask>(Int16.Parse(Environment.GetEnvironmentVariable("TASK1_LIMIT"))),
+            new BlockingCollection<MyTask>(Int16.Parse(Environment.GetEnvironmentVariable("TASK2_LIMIT")))
         };
         private BlockingCollection<MyTask> doneTasks_queue = new BlockingCollection<MyTask>();
         private Func<IDoTask>[] methods = new Func<IDoTask>[1 + 2] {
@@ -49,53 +49,54 @@ namespace BackgroundWorker
                         Port = Int16.Parse(Environment.GetEnvironmentVariable("RabbitMQ_Port"))
                     };
                     _connection = factory.CreateConnection();
+                    _channel = _connection.CreateModel();
+                    _channel.QueueDeclare(
+                        queue: Environment.GetEnvironmentVariable("RabbitMQ_TASK_Queue"),
+                        durable: true,
+                        exclusive: false,
+                        autoDelete: false,
+                        arguments: null
+                    );
+                    _channel.BasicQos(
+                        prefetchSize: 0,
+                        prefetchCount: 1,
+                        global: false
+                    );
+                    _logger.LogInformation(" [*] Waiting for messages...");
+                    var consumer = new EventingBasicConsumer(_channel);
+                    consumer.Received += (sender, m) =>
+                    {
+                        var body = m.Body.ToArray();
+                        var message = Encoding.UTF8.GetString(body);
+                        MyTask task = JsonSerializer.Deserialize<MyTask>(message);
+                        this.queues[task.type].Add(task); // add tasks into queue by their type
+                        _logger.LogInformation($" [x] Done: adding task {task.type} into queue");
+                        // launching ackowledgment
+                        _channel.BasicAck(
+                                    deliveryTag: m.DeliveryTag,
+                                    multiple: false
+                                );
+                    };
+                    _consumerTag = _channel.BasicConsume(
+                        queue: Environment.GetEnvironmentVariable("RabbitMQ_TASK_Queue"),
+                        autoAck: false,
+                        consumer: consumer
+                    );
+                    Task RunTask = Task.Run(() => { this.StartRun(_logger, stoppingToken); }); // start unit threads
+                    Task PublishDoneTask = Task.Run(() => { this.PublishDoneTasks(_logger, stoppingToken, _connection); }); // start to publish done task message
+                    RunTask.Wait(); // all unit threads stop before publishDonTask thread 
+                    this.doneTasks_queue.CompleteAdding(); // closing blockingcollection of done tasks queue
+                    PublishDoneTask.Wait();
                     break;
                 }
                 catch (RabbitMQ.Client.Exceptions.BrokerUnreachableException e)
                 {
                     _logger.LogInformation($"error: lose connection with RabbitMQ.");
                     _logger.LogInformation("Trying to re-connect to RabbitMQ in 500 ms later.");
+                    if (stoppingToken.WaitHandle.WaitOne(0)) break;
                     Thread.Sleep(500);
                 }
             }
-
-            _channel = _connection.CreateModel();
-            _channel.QueueDeclare(
-                queue: Environment.GetEnvironmentVariable("RabbitMQ_TASK_Queue"),
-                exclusive: false,
-                autoDelete: false,
-                arguments: null
-            );
-            _channel.BasicQos(
-                prefetchSize: 0,
-                prefetchCount: 1,
-                global: false
-            );
-            _logger.LogInformation(" [*] Waiting for messages...");
-            var consumer = new EventingBasicConsumer(_channel);
-            consumer.Received += (sender, m) =>
-            {
-                var body = m.Body.ToArray();
-                var message = Encoding.UTF8.GetString(body);
-                MyTask task = JsonSerializer.Deserialize<MyTask>(message);
-                this.queues[task.type].Add(task); // add tasks into queue by their type
-                _logger.LogInformation($" [x] Done: adding task {task.type} into queue");
-                // launching ackowledgment
-                _channel.BasicAck(
-                    deliveryTag: m.DeliveryTag,
-                    multiple: false
-                );
-            };
-            _consumerTag = _channel.BasicConsume(
-                queue: Environment.GetEnvironmentVariable("RabbitMQ_TASK_Queue"),
-                autoAck: false,
-                consumer: consumer
-            );
-            Task RunTask = Task.Run(() => { this.StartRun(_logger, stoppingToken); }); // start unit threads
-            Task PublishDoneTask = Task.Run(() => { this.PublishDoneTasks(_logger, stoppingToken, _connection); }); // start to publish done task message
-            RunTask.Wait(); // all unit threads stop before publishDonTask thread 
-            this.doneTasks_queue.CompleteAdding(); // closing blockingcollection of done tasks queue
-            PublishDoneTask.Wait();
             return Task.CompletedTask;
         }
 
@@ -111,6 +112,10 @@ namespace BackgroundWorker
             catch (RabbitMQ.Client.Exceptions.AlreadyClosedException e)
             {
                 _logger.LogInformation("Already Closed.");
+            }
+            catch (Exception)
+            {
+                _logger.LogInformation("Closed!");
             }
             return base.StopAsync(cancellationToken);
         }
@@ -152,6 +157,7 @@ namespace BackgroundWorker
             this._channelPub = conn.CreateModel();
             this._channelPub.QueueDeclare(
                 queue: Environment.GetEnvironmentVariable("RabbitMQ_DONE_TASK_Queue"),
+                durable: true,
                 exclusive: false,
                 autoDelete: false,
                 arguments: null

@@ -19,7 +19,8 @@ services:
             - myNetwork
     backgoundworker:
         container_name: Worker
-        image: docker-lab.build.91app.io/arch/andylu/backgroundworker:latest
+        build: 
+            context: ./BackgroundWorker
         hostname: worker
         depends_on:
             rabbitmq3:
@@ -30,9 +31,24 @@ services:
           target: /app/.env
         networks: 
             - myNetwork
+    # backgoundworker2:
+    #     container_name: Worker2
+    #     build: 
+    #         context: ./BackgroundWorker
+    #     hostname: worker2
+    #     depends_on:
+    #         rabbitmq3:
+    #             condition: service_healthy
+    #     volumes:
+    #     - type: bind
+    #       source: ./BackgroundWorker/.env
+    #       target: /app/.env
+    #     networks: 
+    #         - myNetwork
     dashboard:
         container_name: NMQ_dashboard
-        image: docker-lab.build.91app.io/arch/andylu/dashboard:latest
+        build:
+            context: ./Dashboard
         hostname: NMQ_dashboard
         ports:
             - "3001:3001"

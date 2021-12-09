@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: dashboard
+  name: dashboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dashboard
+  template:
+    metadata:
+      labels:
+        app: dashboard
+    spec:
+      imagePullSecrets:
+        # 無效 可能原因為AM 上的 docker image 沒有版號 9/29 等待處理
+        - name: my-private-registry
+      # initContainers:
+      #   - name: rabbitmq-server
+      #     image: rabbitmq:management 
+      containers:
+      - name: dashboard 
+        image: docker-lab.build.91app.io/arch/andylu/dashboard:latest
+        ports:
+          - containerPort: 3001
+            name: dashboard-3001
+        resources:
+          limits:
+            cpu: 500m
+            memory: 3Gi
+          requests:
+            cpu: 500m
+            memory: 3Gi
+        # volumeMounts:
+        #   - mountPath: /app/.env
+        #     name: nmq-dashboard-config
+        #     readOnly: true
+      volumes:
+        - name: env-config-volume
+          configMap:
+            defaultMode: 400
+            name: envlab-config-files
+            optional: true
